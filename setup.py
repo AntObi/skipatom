@@ -22,4 +22,4 @@ setup(name="skipatom",
       packages=packages,
       keywords=["machine learning", "materials science", "materials informatics", "distributed representations", "chemistry"],
       python_requires='>=3.6',
-      install_requires=["pymatgen >= 2021.2.8.1", "numpy >= 1.18.5", "tqdm >= 4.61.1", "jax >= 0.2.5", "jaxlib >= 0.1.56"])
+      install_requires=["pymatgen >= 2022.0.0", "numpy >= 1.18.5", "tqdm >= 4.61.1", "jax >= 0.2.5", "jaxlib >= 0.1.56"])

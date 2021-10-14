@@ -2,7 +2,7 @@ from .training_data import TrainingData
 from .trainer import Trainer
 from .model import SkipAtomModel
 import numpy as np
-from pymatgen import Element
+from pymatgen.core import Element
 
 
 class SkipAtomInducedModel:
