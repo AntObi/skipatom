@@ -10,4 +10,12 @@ from .one_hot import OneHotVectors
 from .random_vectors import RandomVectors
 from .trainer import Trainer
 from .training_data import TrainingData
-from .util import Atom, get_atoms, get_cooccurrence_pairs, max_pool, mean_pool, sum_pool
+from .util import (
+    Atom,
+    get_atoms,
+    get_cooccurrence_pairs,
+    get_cooccurrence_pairs_oxi,
+    max_pool,
+    mean_pool,
+    sum_pool,
+)
