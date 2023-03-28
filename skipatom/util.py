@@ -1,4 +1,7 @@
 import numpy as np
+from pymatgen.analysis.bond_valence import BVAnalyzer
+from pymatgen.analysis.graphs import StructureGraph
+from pymatgen.analysis.local_env import CrystalNN
 
 
 def get_cooccurrence_pairs(struct):
@@ -9,8 +12,6 @@ def get_cooccurrence_pairs(struct):
 
     :return: a list of co-occurring atom pairs (i.e. a list of 2-tuples)
     """
-    from pymatgen.analysis.graphs import StructureGraph
-    from pymatgen.analysis.local_env import CrystalNN
 
     pairs = []
     struct_graph = StructureGraph.with_local_env_strategy(struct, CrystalNN())
@@ -23,6 +24,32 @@ def get_cooccurrence_pairs(struct):
         for neighbor in neighbors:
             pairs.append((target, neighbor))
     return pairs
+
+
+def get_cooccurrence_pairs_oxi(struct):
+    """
+    Given a pymatgen Structure, returns a list with the co-occurring species pairs.
+
+    :param struct: a pymatgen Structure object
+
+    :return: a list of co-occurring species pairs (i.e. a list of 2-tuples)
+    """
+    analyzer = BVAnalyzer()
+    try:
+        struct = analyzer.get_oxi_state_decorated_structure(struct)
+        pairs = []
+        struct_graph = StructureGraph.with_local_env_strategy(struct, CrystalNN())
+        labels = {i: spec.to_pretty_string() for i, spec in enumerate(struct.species)}
+        G = struct_graph.graph.to_undirected()
+        for n in labels:
+            target = labels[n]
+            # TODO what if the atom doesn't have any neighbors?
+            neighbors = [labels[i] for i in G.neighbors(n)]
+            for neighbor in neighbors:
+                pairs.append((target, neighbor))
+        return pairs
+    except Exception:
+        return []
 
 
 def sum_pool(comp, dictionary, embeddings):
