@@ -1,10 +1,14 @@
+import re
+from typing import Dict, Tuple
+
 import numpy as np
 from pymatgen.analysis.bond_valence import BVAnalyzer
 from pymatgen.analysis.graphs import StructureGraph
 from pymatgen.analysis.local_env import CrystalNN
+from pymatgen.core import Composition, Structure
 
 
-def get_cooccurrence_pairs(struct):
+def get_cooccurrence_pairs(struct: Structure) -> list:
     """
     Given a pymatgen Structure, returns a list with the co-occurring atom pairs.
 
@@ -26,7 +30,7 @@ def get_cooccurrence_pairs(struct):
     return pairs
 
 
-def get_cooccurrence_pairs_oxi(struct):
+def get_cooccurrence_pairs_oxi(struct: Structure) -> list:
     """
     Given a pymatgen Structure, returns a list with the co-occurring species pairs.
 
@@ -52,7 +56,7 @@ def get_cooccurrence_pairs_oxi(struct):
         return []
 
 
-def sum_pool(comp, dictionary, embeddings):
+def sum_pool(comp: Composition, dictionary: dict, embeddings: list) -> np.ndarray:
     """
     Returns a sum-pooled distributed representation of the given composition using the given embeddings.
 
@@ -71,7 +75,7 @@ def sum_pool(comp, dictionary, embeddings):
     return np.sum(vectors, axis=0).tolist()
 
 
-def mean_pool(comp, dictionary, embeddings):
+def mean_pool(comp: Composition, dictionary: dict, embeddings: list) -> np.ndarray:
     """
     Returns a mean-pooled distributed representation of the given composition using the given embeddings.
 
@@ -92,7 +96,7 @@ def mean_pool(comp, dictionary, embeddings):
     return (np.sum(vectors, axis=0) / tot_amount).tolist()
 
 
-def max_pool(comp, dictionary, embeddings):
+def max_pool(comp: Composition, dictionary: dict, embeddings: list) -> np.ndarray:
     """
     Returns a max-pooled distributed representation of the given composition using the given embeddings.
 
@@ -111,7 +115,7 @@ def max_pool(comp, dictionary, embeddings):
     return np.max(vectors, axis=0).tolist()
 
 
-ATOMS = {
+ATOMS: Dict[str, list] = {
     "H": [1, 1, 2.2],
     "He": [18, 1, np.nan],
     "Li": [1, 2, 0.98],
@@ -239,7 +243,7 @@ class Atom:
     row number, and the atom's Pauling electronegativity.
     """
 
-    def __init__(self, symbol, group, row, X):
+    def __init__(self, symbol: str, group: int, row: int, X: float):
         """
         Create an instance of `Atom`.
 
@@ -264,3 +268,29 @@ def get_atoms():
     return {
         atom: Atom(atom, props[0], props[1], props[2]) for atom, props in ATOMS.items()
     }
+
+
+def parse_species(species: str) -> Tuple[str, int]:
+    """
+    Parses a species string into its atomic symbol and oxidation state.
+
+    :param species: the species string
+    :return: a tuple of the atomic symbol and oxidation state
+
+    """
+
+    ele = re.match(r"[A-Za-z]+", species).group(0)
+
+    charge_match = re.search(r"\d+", species)
+    ox_state = int(charge_match.group(0)) if charge_match else 0
+
+    if "-" in species:
+        ox_state *= -1
+
+    # Handle cases of X+ or X- (instead of X1+ or X1-)
+    if "+" in species and ox_state == 0:
+        ox_state = 1
+
+    if ox_state == 0 and "-" in species:
+        ox_state = -1
+    return ele, ox_state
