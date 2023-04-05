@@ -4,7 +4,7 @@ sys.path.extend([".", ".."])
 import argparse
 from sys import argv
 
-from pymatgen import Element
+from pymatgen.core import Element
 
 from skipatom import SkipAtomInducedModel, SkipAtomModel
 

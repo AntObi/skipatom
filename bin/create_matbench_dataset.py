@@ -6,7 +6,7 @@ import gzip
 import json
 from sys import argv
 
-from pymatgen import Composition, Structure
+from pymatgen.core import Composition, Structure
 
 from skipatom import (
     AtomVectors,

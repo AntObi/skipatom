@@ -5,7 +5,7 @@ import argparse
 import csv
 from sys import argv
 
-from pymatgen import Composition
+from pymatgen.core import Composition
 
 from skipatom import (
     AtomVectors,
