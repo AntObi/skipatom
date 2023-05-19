@@ -75,7 +75,8 @@ if __name__ == "__main__":
 
     if args.skipspecies:
         sorted_specs = sorted(
-            [(s, Species.from_string(s).number) for s in model.dictionary], key=lambda v: v[1]
+            [(s, Species.from_string(s).number) for s in model.dictionary],
+            key=lambda v: v[1],
         )
     else:
         sorted_elems = sorted(
@@ -94,7 +95,7 @@ if __name__ == "__main__":
                 row = [spec]
                 row.extend([str(v) for v in vec])
                 f.write("%s\n" % ",".join(row))
-        else:      
+        else:
             header = ["element"]
             header.extend([str(i) for i in range(dim)])
             f.write("%s\n" % ",".join(header))
