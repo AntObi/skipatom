@@ -1,16 +1,19 @@
 import sys
+
 sys.path.extend([".", ".."])
+import argparse
+import csv
+import gzip
 import os
 import shutil
-import argparse
 from sys import argv
-import gzip
-from skipatom import ElemNet, ElemNetClassifier
-import numpy as np
-from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
-from keras.callbacks import Callback, CSVLogger, ModelCheckpoint, EarlyStopping
 from time import time
-import csv
+
+import numpy as np
+from keras.callbacks import Callback, CSVLogger, EarlyStopping, ModelCheckpoint
+from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
+
+from skipatom import ElemNet, ElemNetClassifier
 
 try:
     import cPickle as pickle
@@ -29,53 +32,108 @@ class LogMetrics(Callback):
 
 def load_all_data(filename, gzipped=True):
     o = gzip.open if gzipped else open
-    with o(filename, 'rb') as f:
+    with o(filename, "rb") as f:
         _, data = pickle.load(f)
         dataset = np.array(data)
         return dataset[:, 0].tolist(), dataset[:, 1].tolist()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Train and evaluate an ElemNet-like neural network model using the Matbench v0.1 protocol "
-                    "(https://hackingmaterials.lbl.gov/automatminer/datasets.html#benchmarking-and-reporting-your-algorithm)."
+        "(https://hackingmaterials.lbl.gov/automatminer/datasets.html#benchmarking-and-reporting-your-algorithm)."
     )
-    parser.add_argument("--dataset", nargs="?", required=True, type=str,
-                        help="path to dataset file")
-    parser.add_argument("--results", nargs="?", required=True, type=str,
-                        help="path to the directory where the results .csv file will be written "
-                             "(this directory must already exist)")
-    parser.add_argument("--models", nargs="?", required=True, type=str,
-                        help="path to the directory where models will be persisted "
-                             "(NOTE: this directory will be deleted if it exists)")
+    parser.add_argument(
+        "--dataset", nargs="?", required=True, type=str, help="path to dataset file"
+    )
+    parser.add_argument(
+        "--results",
+        nargs="?",
+        required=True,
+        type=str,
+        help="path to the directory where the results .csv file will be written "
+        "(this directory must already exist)",
+    )
+    parser.add_argument(
+        "--models",
+        nargs="?",
+        required=True,
+        type=str,
+        help="path to the directory where models will be persisted "
+        "(NOTE: this directory will be deleted if it exists)",
+    )
 
-    parser.add_argument("--folds", required=False, type=int, default=5,
-                        help="the number of folds to use (NOTE: the protocol requires 5)")
-    parser.add_argument("--seed", required=False, type=int, default=18012019,
-                        help="the random state to use for creating the k-fold splits "
-                             "(NOTE: the protocol requires 18012019)")
-    parser.add_argument("--val_size", required=False, type=float, default=0.10,
-                        help="a number between 0 and 1 representing the fraction of the training set to "
-                             "withold as a validation set during training")
-    parser.add_argument("--epochs", required=False, type=int, default=100,
-                        help="the maximum number of epochs")
-    parser.add_argument("--batch", required=False, type=int, default=32,
-                        help="the batch size")
-    parser.add_argument("--lr", required=False, type=float, default=0.0001,
-                        help="the learning rate")
-    parser.add_argument("--activation", required=False, type=str, default="relu",
-                        help="the type of activation to use")
-    parser.add_argument("--l2", required=False, type=float, default=0.00001,
-                        help="the L2 lambda value to use")
+    parser.add_argument(
+        "--folds",
+        required=False,
+        type=int,
+        default=5,
+        help="the number of folds to use (NOTE: the protocol requires 5)",
+    )
+    parser.add_argument(
+        "--seed",
+        required=False,
+        type=int,
+        default=18012019,
+        help="the random state to use for creating the k-fold splits "
+        "(NOTE: the protocol requires 18012019)",
+    )
+    parser.add_argument(
+        "--val_size",
+        required=False,
+        type=float,
+        default=0.10,
+        help="a number between 0 and 1 representing the fraction of the training set to "
+        "withold as a validation set during training",
+    )
+    parser.add_argument(
+        "--epochs",
+        required=False,
+        type=int,
+        default=100,
+        help="the maximum number of epochs",
+    )
+    parser.add_argument(
+        "--batch", required=False, type=int, default=32, help="the batch size"
+    )
+    parser.add_argument(
+        "--lr", required=False, type=float, default=0.0001, help="the learning rate"
+    )
+    parser.add_argument(
+        "--activation",
+        required=False,
+        type=str,
+        default="relu",
+        help="the type of activation to use",
+    )
+    parser.add_argument(
+        "--l2",
+        required=False,
+        type=float,
+        default=0.00001,
+        help="the L2 lambda value to use",
+    )
 
-    parser.add_argument("--classification", action="store_true", default=False,
-                        help="whether this is a classification task")
+    parser.add_argument(
+        "--classification",
+        action="store_true",
+        default=False,
+        help="whether this is a classification task",
+    )
 
-    parser.add_argument("--early-stopping", dest="early_stopping", action="store_true",
-                        default=False,
-                        help="whether to use early stopping")
-    parser.add_argument("--patience", required=("--early-stopping" in argv), type=int,
-                        help="the patience to use if early stopping was specified")
+    parser.add_argument(
+        "--early-stopping",
+        dest="early_stopping",
+        action="store_true",
+        default=False,
+        help="whether to use early stopping",
+    )
+    parser.add_argument(
+        "--patience",
+        required=("--early-stopping" in argv),
+        type=int,
+        help="the patience to use if early stopping was specified",
+    )
 
     args = parser.parse_args()
 
@@ -128,7 +186,9 @@ if __name__ == '__main__':
     print("dim: %s" % dim)
 
     if args.classification:
-        kfold = StratifiedKFold(n_splits=args.folds, random_state=args.seed, shuffle=True)
+        kfold = StratifiedKFold(
+            n_splits=args.folds, random_state=args.seed, shuffle=True
+        )
     else:
         kfold = KFold(n_splits=args.folds, random_state=args.seed, shuffle=True)
 
@@ -136,12 +196,13 @@ if __name__ == '__main__':
 
     fold = 0
     for train_val, test in kfold.split(X, y):
-
         fold += 1
         print("FOLD %s" % fold)
 
         log_metrics = LogMetrics(current_fold=fold)
-        csv_log_filename = os.path.join(args.results, "%s-fold-results.csv" % experiment)
+        csv_log_filename = os.path.join(
+            args.results, "%s-fold-results.csv" % experiment
+        )
         csv_logger = CSVLogger(csv_log_filename, separator=",", append=True)
 
         model_checkpoint = ModelCheckpoint(
@@ -154,18 +215,32 @@ if __name__ == '__main__':
 
         callbacks = [log_metrics, csv_logger, model_checkpoint]
         if args.early_stopping:
-            callbacks.append(EarlyStopping(
-                monitor="val_auc" if args.classification else "val_mae",
-                mode="max" if args.classification else "min",
-                patience=args.patience
-            ))
+            callbacks.append(
+                EarlyStopping(
+                    monitor="val_auc" if args.classification else "val_mae",
+                    mode="max" if args.classification else "min",
+                    patience=args.patience,
+                )
+            )
 
-        model = architecture(input_dim=dim, activation=args.activation, l2_lambda=args.l2)
+        model = architecture(
+            input_dim=dim, activation=args.activation, l2_lambda=args.l2
+        )
 
-        train, val = train_test_split(train_val, test_size=args.val_size, random_state=args.seed, shuffle=True)
+        train, val = train_test_split(
+            train_val, test_size=args.val_size, random_state=args.seed, shuffle=True
+        )
 
-        model.train(X[train], y[train], X[val], y[val],
-                    num_epochs=args.epochs, batch_size=args.batch, step_size=args.lr, callbacks=callbacks)
+        model.train(
+            X[train],
+            y[train],
+            X[val],
+            y[val],
+            num_epochs=args.epochs,
+            batch_size=args.batch,
+            step_size=args.lr,
+            callbacks=callbacks,
+        )
 
         checkpoints = [os.path.join(model_dir, name) for name in os.listdir(model_dir)]
         latest_checkpoint = max(checkpoints, key=os.path.getctime)
@@ -178,7 +253,7 @@ if __name__ == '__main__':
         test_results.append(evaluation)
         print(evaluation)
 
-    with open(os.path.join(args.results, "%s-test-results.csv" % experiment), "wt") as f:
+    with open(os.path.join(args.results, "%s-test-results.csv" % experiment), "w") as f:
         fieldnames = test_results[0].keys()
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
