@@ -1,19 +1,22 @@
 import sys
+
 sys.path.extend([".", ".."])
+import argparse
+import logging
 import os
 import shutil
-import argparse
 from sys import argv
-from skipatom import ElemNet, ElemNetClassifier
-from pymatgen.core import Composition
+from time import time
+
 import numpy as np
 import pandas as pd
-from skipatom import sum_pool, mean_pool, max_pool
-from sklearn.model_selection import train_test_split
-from keras.callbacks import Callback, CSVLogger, ModelCheckpoint, EarlyStopping
+from keras.callbacks import Callback, CSVLogger, EarlyStopping, ModelCheckpoint
 from matbench.bench import MatbenchBenchmark
-from time import time
-import logging
+from pymatgen.core import Composition
+from sklearn.model_selection import train_test_split
+
+from skipatom import ElemNet, ElemNetClassifier, max_pool, mean_pool, sum_pool
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("skipatom")
 
@@ -69,50 +72,105 @@ def featurize(X, input_type, atom_dictionary, atom_embeddings, pool):
     return np.array(X_featurized)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     mb = MatbenchBenchmark(autoload=False)
     suported_tasks = list(mb.tasks_map.keys())
 
     parser = argparse.ArgumentParser(
         description="Run the Matbench v0.1 protocol on an ElemNet-like neural network model "
-                    "(see https://matbench.materialsproject.org/)."
+        "(see https://matbench.materialsproject.org/)."
     )
-    parser.add_argument("--task", nargs="?", required=True, choices=suported_tasks,
-                        help="the Matbench task to run")
+    parser.add_argument(
+        "--task",
+        nargs="?",
+        required=True,
+        choices=suported_tasks,
+        help="the Matbench task to run",
+    )
 
-    parser.add_argument("--results", nargs="?", required=True, type=str,
-                        help="path to the directory where the results .csv file will be written "
-                             "(this directory must already exist)")
-    parser.add_argument("--models", nargs="?", required=True, type=str,
-                        help="path to the directory where models will be persisted "
-                             "(NOTE: this directory will be deleted if it exists)")
+    parser.add_argument(
+        "--results",
+        nargs="?",
+        required=True,
+        type=str,
+        help="path to the directory where the results .csv file will be written "
+        "(this directory must already exist)",
+    )
+    parser.add_argument(
+        "--models",
+        nargs="?",
+        required=True,
+        type=str,
+        help="path to the directory where models will be persisted "
+        "(NOTE: this directory will be deleted if it exists)",
+    )
 
-    parser.add_argument("--vectors", required=True, type=str,
-                        help="path to the atom vectors .csv file")
-    parser.add_argument("--pooling", required=True, choices=POOLINGS,
-                        help="the type of pooling operation to use")
+    parser.add_argument(
+        "--vectors", required=True, type=str, help="path to the atom vectors .csv file"
+    )
+    parser.add_argument(
+        "--pooling",
+        required=True,
+        choices=POOLINGS,
+        help="the type of pooling operation to use",
+    )
 
-    parser.add_argument("--val_size", required=False, type=float, default=0.10,
-                        help="a number between 0 and 1 representing the fraction of the training set to "
-                             "withold as a validation set during training")
-    parser.add_argument("--seed", required=False, type=int, default=18012019,
-                        help="the random state to use for the validation set split")
-    parser.add_argument("--epochs", required=False, type=int, default=100,
-                        help="the maximum number of epochs")
-    parser.add_argument("--batch", required=False, type=int, default=32,
-                        help="the batch size")
-    parser.add_argument("--lr", required=False, type=float, default=0.0001,
-                        help="the learning rate")
-    parser.add_argument("--activation", required=False, type=str, default="relu",
-                        help="the type of activation to use")
-    parser.add_argument("--l2", required=False, type=float, default=0.00001,
-                        help="the L2 lambda value to use")
+    parser.add_argument(
+        "--val_size",
+        required=False,
+        type=float,
+        default=0.10,
+        help="a number between 0 and 1 representing the fraction of the training set to "
+        "withold as a validation set during training",
+    )
+    parser.add_argument(
+        "--seed",
+        required=False,
+        type=int,
+        default=18012019,
+        help="the random state to use for the validation set split",
+    )
+    parser.add_argument(
+        "--epochs",
+        required=False,
+        type=int,
+        default=100,
+        help="the maximum number of epochs",
+    )
+    parser.add_argument(
+        "--batch", required=False, type=int, default=32, help="the batch size"
+    )
+    parser.add_argument(
+        "--lr", required=False, type=float, default=0.0001, help="the learning rate"
+    )
+    parser.add_argument(
+        "--activation",
+        required=False,
+        type=str,
+        default="relu",
+        help="the type of activation to use",
+    )
+    parser.add_argument(
+        "--l2",
+        required=False,
+        type=float,
+        default=0.00001,
+        help="the L2 lambda value to use",
+    )
 
-    parser.add_argument("--early-stopping", dest="early_stopping", action="store_true",
-                        default=False,
-                        help="whether to use early stopping")
-    parser.add_argument("--patience", required=("--early-stopping" in argv), type=int,
-                        help="the patience to use if early stopping was specified")
+    parser.add_argument(
+        "--early-stopping",
+        dest="early_stopping",
+        action="store_true",
+        default=False,
+        help="whether to use early stopping",
+    )
+    parser.add_argument(
+        "--patience",
+        required=("--early-stopping" in argv),
+        type=int,
+        help="the patience to use if early stopping was specified",
+    )
 
     args = parser.parse_args()
 
@@ -160,8 +218,13 @@ if __name__ == '__main__':
 
         train_inputs, train_outputs = task.get_train_and_val_data(fold)
 
-        X_train, X_val, y_train, y_val = train_test_split(train_inputs, train_outputs, test_size=args.val_size,
-                                                          random_state=args.seed, shuffle=True)
+        X_train, X_val, y_train, y_val = train_test_split(
+            train_inputs,
+            train_outputs,
+            test_size=args.val_size,
+            random_state=args.seed,
+            shuffle=True,
+        )
 
         X_train = featurize(X_train, input_type, atom_dictionary, atom_embeddings, pool)
         X_val = featurize(X_val, input_type, atom_dictionary, atom_embeddings, pool)
@@ -169,7 +232,7 @@ if __name__ == '__main__':
         y_train = y_train.to_numpy()
         y_val = y_val.to_numpy()
 
-        log_metrics = LogMetrics(current_fold=fold+1)
+        log_metrics = LogMetrics(current_fold=fold + 1)
         csv_log_filename = os.path.join(args.results, f"{experiment}-fold-results.csv")
         csv_logger = CSVLogger(csv_log_filename, separator=",", append=True)
 
@@ -183,16 +246,28 @@ if __name__ == '__main__':
 
         callbacks = [log_metrics, csv_logger, model_checkpoint]
         if args.early_stopping:
-            callbacks.append(EarlyStopping(
-                monitor="val_auc" if is_classification else "val_mae",
-                mode="max" if is_classification else "min",
-                patience=args.patience
-            ))
+            callbacks.append(
+                EarlyStopping(
+                    monitor="val_auc" if is_classification else "val_mae",
+                    mode="max" if is_classification else "min",
+                    patience=args.patience,
+                )
+            )
 
-        model = architecture(input_dim=X_train[0].shape[0], activation=args.activation, l2_lambda=args.l2)
+        model = architecture(
+            input_dim=X_train[0].shape[0], activation=args.activation, l2_lambda=args.l2
+        )
 
-        model.train(X_train, y_train, X_val, y_val,
-                    num_epochs=args.epochs, batch_size=args.batch, step_size=args.lr, callbacks=callbacks)
+        model.train(
+            X_train,
+            y_train,
+            X_val,
+            y_val,
+            num_epochs=args.epochs,
+            batch_size=args.batch,
+            step_size=args.lr,
+            callbacks=callbacks,
+        )
 
         checkpoints = [os.path.join(model_dir, name) for name in os.listdir(model_dir)]
         latest_checkpoint = max(checkpoints, key=os.path.getctime)
@@ -202,7 +277,9 @@ if __name__ == '__main__':
         logger.info("evaluating on test set...")
         # Get testing data
         test_inputs = task.get_test_data(fold, include_target=False)
-        X_test = featurize(test_inputs, input_type, atom_dictionary, atom_embeddings, pool)
+        X_test = featurize(
+            test_inputs, input_type, atom_dictionary, atom_embeddings, pool
+        )
 
         # Predict on the testing data;
         #  output should be a pandas series, numpy array, or python iterable
