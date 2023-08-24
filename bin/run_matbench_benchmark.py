@@ -48,14 +48,8 @@ def atom_vectors_from_csv(embedding_csv):
 def get_composition(val, input_type):
     if input_type == "composition":
         return Composition(val)
-    elif input_type == "":
-        pass  # TODO handle structure type
-        # if type(pair[0]) is dict:
-        #     composition = Structure.from_dict(pair[0]).composition
-        #     formula = composition.reduced_formula
-        # else:
-        #     formula = pair[0]
-        #     composition = Composition(formula)
+    elif input_type == "structure":
+        return val.composition
     else:
         raise Exception(f"unrecognized input type: {input_type}")
 
