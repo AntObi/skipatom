@@ -13,6 +13,7 @@ import pandas as pd
 from keras.callbacks import Callback, CSVLogger, EarlyStopping, ModelCheckpoint
 from matbench.bench import MatbenchBenchmark
 from pymatgen.core import Composition
+from pymatgen.analysis.bond_valence import BVAnalyzer
 from sklearn.model_selection import train_test_split
 
 from skipatom import ElemNet, ElemNetClassifier, max_pool, mean_pool, sum_pool
@@ -44,6 +45,15 @@ def atom_vectors_from_csv(embedding_csv):
     dictionary = {e: i for i, e in enumerate(elements)}
     return dictionary, embeddings
 
+def species_vectors_from_csv(embedding_csv):
+    logger.info(f"reading species vectors from {embedding_csv}")
+    df = pd.read_csv(embedding_csv)
+    elements = list(df["species"])
+    df.drop(["species"], axis=1, inplace=True)
+    embeddings = df.to_numpy()
+    dictionary = {e: i for i, e in enumerate(elements)}
+    return dictionary, embeddings
+
 
 def get_composition(val, input_type):
     if input_type == "composition":
@@ -53,6 +63,17 @@ def get_composition(val, input_type):
     else:
         raise Exception(f"unrecognized input type: {input_type}")
 
+def get_composition_species(val, input_type):
+    if input_type == "composition":
+        return Composition(val).add_charges_from_oxi_state_guesses()
+    elif input_type == "structure":
+        try:
+            return val.composition.add_charges_from_oxi_state_guesses()
+        except:
+            bv= BVAnalyzer()
+            return bv.get_oxi_state_decorated_structure(val).composition
+    else:
+        raise Exception(f"unrecognized input type: {input_type}")
 
 def featurize(X, input_type, atom_dictionary, atom_embeddings, pool):
     X_featurized = []
@@ -65,6 +86,23 @@ def featurize(X, input_type, atom_dictionary, atom_embeddings, pool):
         X_featurized.append(pool(composition, atom_dictionary, atom_embeddings))
     return np.array(X_featurized)
 
+def featurize_species(X, input_type, species_dictionary, species_embeddings, atom_dictionary, atom_embeddings, pool):
+    X_featurized = []
+    for val in X.values:
+        composition = get_composition_species(val, input_type)
+        #print(composition.reduced_formula)
+
+        if any([e.to_pretty_string() not in species_dictionary for e in composition.elements]):
+            try:
+                composition = get_composition(val, input_type)
+                if any([e.name not in atom_dictionary for e in composition.elements]):
+                    raise Exception(f"{composition.reduced_formula} contains unsupported atoms")
+                X_featurized.append(pool(composition, atom_dictionary, atom_embeddings))
+            except:
+                raise Exception(f"{composition.reduced_formula} contains unsupported species and atoms")
+        else:
+            X_featurized.append(pool(composition, species_dictionary, species_embeddings, species_mode=True))
+    return np.array(X_featurized)
 
 if __name__ == "__main__":
     mb = MatbenchBenchmark(autoload=False)
@@ -101,6 +139,9 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--vectors", required=True, type=str, help="path to the atom vectors .csv file"
+    )
+    parser.add_argument(
+        "--species-vectors", required=False, type=str, help="path to the species vectors .csv file"
     )
     parser.add_argument(
         "--pooling",
@@ -165,6 +206,11 @@ if __name__ == "__main__":
         type=int,
         help="the patience to use if early stopping was specified",
     )
+    parser.add_argument(
+        "--species",
+        action="store_true",
+        help="whether to use species vectors",
+    )
 
     args = parser.parse_args()
 
@@ -199,8 +245,13 @@ if __name__ == "__main__":
         pool = max_pool
     else:
         raise Exception(f"unsupported pooling: {args.pooling}")
-
-    atom_dictionary, atom_embeddings = atom_vectors_from_csv(args.vectors)
+    
+    if args.species:
+        atom_dictionary, atom_embeddings = atom_vectors_from_csv(args.vectors)
+        species_dictionary, species_embeddings = species_vectors_from_csv(args.species_vectors)
+    else:
+        atom_dictionary, atom_embeddings = atom_vectors_from_csv(args.vectors)
+    
     input_type = task.metadata["input_type"]
 
     logger.info(f"architecture: {architecture}")
@@ -219,9 +270,12 @@ if __name__ == "__main__":
             random_state=args.seed,
             shuffle=True,
         )
-
-        X_train = featurize(X_train, input_type, atom_dictionary, atom_embeddings, pool)
-        X_val = featurize(X_val, input_type, atom_dictionary, atom_embeddings, pool)
+        if args.species:
+            X_train = featurize_species(X_train, input_type,species_dictionary, species_embeddings, atom_dictionary, atom_embeddings, pool)
+            X_val = featurize_species(X_val, input_type, species_dictionary, species_embeddings, atom_dictionary, atom_embeddings, pool)
+        else:
+            X_train = featurize(X_train, input_type, atom_dictionary, atom_embeddings, pool)
+            X_val = featurize(X_val, input_type, atom_dictionary, atom_embeddings, pool)
 
         y_train = y_train.to_numpy()
         y_val = y_val.to_numpy()
@@ -271,9 +325,14 @@ if __name__ == "__main__":
         logger.info("evaluating on test set...")
         # Get testing data
         test_inputs = task.get_test_data(fold, include_target=False)
-        X_test = featurize(
-            test_inputs, input_type, atom_dictionary, atom_embeddings, pool
-        )
+        if args.species:
+            X_test = featurize_species(
+                test_inputs, input_type, atom_dictionary, atom_embeddings, pool
+            )
+        else:
+            X_test = featurize(
+                test_inputs, input_type, atom_dictionary, atom_embeddings, pool
+            )
 
         # Predict on the testing data;
         #  output should be a pandas series, numpy array, or python iterable
