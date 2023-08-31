@@ -256,6 +256,9 @@ if __name__ == "__main__":
 
     logger.info(f"architecture: {architecture}")
     logger.info(f"val_size: {args.val_size}")
+    logger.info(f"seed: {args.seed}")
+    logger.info(f"max epochs: {args.epochs}")
+    logger.info(f"Matbench task: {args.task}")
     # TODO log other params
 
     for fold in task.folds:
@@ -327,7 +330,7 @@ if __name__ == "__main__":
         test_inputs = task.get_test_data(fold, include_target=False)
         if args.species:
             X_test = featurize_species(
-                test_inputs, input_type, atom_dictionary, atom_embeddings, pool
+                test_inputs, input_type,species_dictionary, species_embeddings, atom_dictionary, atom_embeddings, pool
             )
         else:
             X_test = featurize(
