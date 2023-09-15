@@ -1,10 +1,13 @@
-SkipAtom
-========
+# SkipSpecies
 
-SkipAtom is an approach for creating distributed representations of atoms, for use in Machine Learning contexts. It is
-based on the Skip-gram model used widely in Natural Language Processing. The SkipAtom approach is described in the 
-paper _"Distributed Representations of Atoms and Materials for Machine Learning"_,
-[https://arxiv.org/abs/2107.14664](https://arxiv.org/abs/2107.14664).
+SkipSpecies is a modification to SkipAtom which is an approach for creating distributed representations of atoms, for use in Machine Learning contexts. It is
+based on the Skip-gram model used widely in Natural Language Processing.
+
+## This fork
+
+:warning: For the original SkipAtom repository, see https://github.com/lantunes/skipatom :warning:
+
+## Installation
 
 SkipAtom can be installed with:
 ```
@@ -266,6 +269,8 @@ placed, respectively. The `train_mlp.py` program also accepts arguments for spec
 size, etc.
 
 - - - - - - - - -
+The SkipAtom approach is described in the paper _"Distributed Representations of Atoms and Materials for Machine Learning"_,
+> Antunes, L.M., Grau-Crespo, R. and Butler, K.T., 2022. Distributed representations of atoms and materials for machine learning. npj Computational Materials, 8(1), p.44.
 
 This repository includes data from the [Materials Project](https://materialsproject.org/). 
 > A. Jain*, S.P. Ong*, G. Hautier, W. Chen, W.D. Richards, S. Dacek, S. Cholia, D. Gunter, D. Skinner, G. Ceder, K.A. 
