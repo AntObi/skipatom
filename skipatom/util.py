@@ -75,7 +75,9 @@ def sum_pool(comp: Composition, dictionary: dict, embeddings: list) -> np.ndarra
     return np.sum(vectors, axis=0).tolist()
 
 
-def mean_pool(comp: Composition, dictionary: dict, embeddings: list) -> np.ndarray:
+def mean_pool(
+    comp: Composition, dictionary: dict, embeddings: list, species_mode: bool = False
+) -> np.ndarray:
     """
     Returns a mean-pooled distributed representation of the given composition using the given embeddings.
 
@@ -90,9 +92,16 @@ def mean_pool(comp: Composition, dictionary: dict, embeddings: list) -> np.ndarr
     vectors = []
     tot_amount = 0
     for e in comp.elements:
-        amount = float(comp.to_reduced_dict[e.name])
-        vectors.append(amount * np.array(embeddings[dictionary[e.name]]))
-        tot_amount += amount
+        if species_mode:
+            amount = float(comp.to_reduced_dict[e.to_pretty_string()])
+            vectors.append(
+                amount * np.array(embeddings[dictionary[e.to_pretty_string()]])
+            )
+            tot_amount += amount
+        else:
+            amount = float(comp.to_reduced_dict[e.name])
+            vectors.append(amount * np.array(embeddings[dictionary[e.name]]))
+            tot_amount += amount
     return (np.sum(vectors, axis=0) / tot_amount).tolist()
 
 
