@@ -2,7 +2,6 @@ import re
 from typing import Dict, Tuple
 
 import numpy as np
-from pymatgen.analysis.bond_valence import BVAnalyzer
 from pymatgen.analysis.graphs import StructureGraph
 from pymatgen.analysis.local_env import CrystalNN
 from pymatgen.core import Composition, Structure
@@ -10,7 +9,7 @@ from pymatgen.core import Composition, Structure
 
 def get_cooccurrence_pairs(struct: Structure) -> list:
     """
-    Given a pymatgen Structure, returns a list with the co-occurring atom pairs.
+    Given a pymatgen Structure, returns a list with the co-occurring atom/species pairs.
 
     :param struct: a pymatgen Structure object
 
@@ -19,7 +18,7 @@ def get_cooccurrence_pairs(struct: Structure) -> list:
 
     pairs = []
     struct_graph = StructureGraph.with_local_env_strategy(struct, CrystalNN())
-    labels = {i: spec.name for i, spec in enumerate(struct.species)}
+    labels = {i: str(spec) for i, spec in enumerate(struct.species)}
     G = struct_graph.graph.to_undirected()
     for n in labels:
         target = labels[n]
@@ -28,32 +27,6 @@ def get_cooccurrence_pairs(struct: Structure) -> list:
         for neighbor in neighbors:
             pairs.append((target, neighbor))
     return pairs
-
-
-def get_cooccurrence_pairs_oxi(struct: Structure) -> list:
-    """
-    Given a pymatgen Structure, returns a list with the co-occurring species pairs.
-
-    :param struct: a pymatgen Structure object
-
-    :return: a list of co-occurring species pairs (i.e. a list of 2-tuples)
-    """
-    analyzer = BVAnalyzer()
-    try:
-        struct = analyzer.get_oxi_state_decorated_structure(struct)
-        pairs = []
-        struct_graph = StructureGraph.with_local_env_strategy(struct, CrystalNN())
-        labels = {i: spec.to_pretty_string() for i, spec in enumerate(struct.species)}
-        G = struct_graph.graph.to_undirected()
-        for n in labels:
-            target = labels[n]
-            # TODO what if the atom doesn't have any neighbors?
-            neighbors = [labels[i] for i in G.neighbors(n)]
-            for neighbor in neighbors:
-                pairs.append((target, neighbor))
-        return pairs
-    except Exception:
-        return []
 
 
 def sum_pool(comp: Composition, dictionary: dict, embeddings: list) -> np.ndarray:
