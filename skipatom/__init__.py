@@ -12,10 +12,12 @@ from .trainer import Trainer
 from .training_data import TrainingData
 from .util import (
     Atom,
+    atom_vectors_from_csv,
     get_atoms,
     get_cooccurrence_pairs,
-    get_cooccurrence_pairs_oxi,
     max_pool,
     mean_pool,
+    parse_species,
+    species_vectors_from_csv,
     sum_pool,
 )
