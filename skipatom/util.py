@@ -2,6 +2,7 @@ import re
 from typing import Dict, Tuple
 
 import numpy as np
+import pandas as pd
 from pymatgen.analysis.graphs import StructureGraph
 from pymatgen.analysis.local_env import CrystalNN
 from pymatgen.core import Composition, Structure
@@ -43,13 +44,15 @@ def sum_pool(comp: Composition, dictionary: dict, embeddings: list) -> np.ndarra
     """
     vectors = []
     for e in comp.elements:
-        amount = float(comp.to_reduced_dict[e.name])
-        vectors.append(amount * np.array(embeddings[dictionary[e.name]]))
+        amount = float(comp.to_reduced_dict[e.to_pretty_string()])
+        vectors.append(amount * np.array(embeddings[dictionary[e.to_pretty_string()]]))
     return np.sum(vectors, axis=0).tolist()
 
 
 def mean_pool(
-    comp: Composition, dictionary: dict, embeddings: list, species_mode: bool = False
+    comp: Composition,
+    dictionary: dict,
+    embeddings: list,
 ) -> np.ndarray:
     """
     Returns a mean-pooled distributed representation of the given composition using the given embeddings.
@@ -65,16 +68,9 @@ def mean_pool(
     vectors = []
     tot_amount = 0
     for e in comp.elements:
-        if species_mode:
-            amount = float(comp.to_reduced_dict[e.to_pretty_string()])
-            vectors.append(
-                amount * np.array(embeddings[dictionary[e.to_pretty_string()]])
-            )
-            tot_amount += amount
-        else:
-            amount = float(comp.to_reduced_dict[e.name])
-            vectors.append(amount * np.array(embeddings[dictionary[e.name]]))
-            tot_amount += amount
+        amount = float(comp.to_reduced_dict[e.to_pretty_string()])
+        vectors.append(amount * np.array(embeddings[dictionary[e.to_pretty_string()]]))
+        tot_amount += amount
     return (np.sum(vectors, axis=0) / tot_amount).tolist()
 
 
@@ -92,8 +88,8 @@ def max_pool(comp: Composition, dictionary: dict, embeddings: list) -> np.ndarra
     """
     vectors = []
     for e in comp.elements:
-        amount = float(comp.to_reduced_dict[e.name])
-        vectors.append(amount * np.array(embeddings[dictionary[e.name]]))
+        amount = float(comp.to_reduced_dict[e.to_pretty_string()])
+        vectors.append(amount * np.array(embeddings[dictionary[e.to_pretty_string()]]))
     return np.max(vectors, axis=0).tolist()
 
 
@@ -276,3 +272,33 @@ def parse_species(species: str) -> Tuple[str, int]:
     if ox_state == 0 and "-" in species:
         ox_state = -1
     return ele, ox_state
+
+
+def atom_vectors_from_csv(embedding_csv):
+    """
+    Return a dictionary mapping atoms to their properties, and a numpy array of the atom embeddings.
+
+    :param embedding_csv: path to the csv file containing the atom embeddings
+    :return: a dictionary mapping atoms to their properties, and a numpy array of the atom embeddings
+    """
+    df = pd.read_csv(embedding_csv)
+    elements = list(df["element"])
+    df.drop(["element"], axis=1, inplace=True)
+    embeddings = df.to_numpy()
+    dictionary = {e: i for i, e in enumerate(elements)}
+    return dictionary, embeddings
+
+
+def species_vectors_from_csv(embedding_csv):
+    """
+    Return a dictionary mapping species to their properties, and a numpy array of the species embeddings.
+
+    :param embedding_csv: path to the csv file containing the species embeddings
+    :return: a dictionary mapping species to their properties, and a numpy array of the species embeddings
+    """
+    df = pd.read_csv(embedding_csv)
+    elements = list(df["species"])
+    df.drop(["species"], axis=1, inplace=True)
+    embeddings = df.to_numpy()
+    dictionary = {e: i for i, e in enumerate(elements)}
+    return dictionary, embeddings
