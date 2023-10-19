@@ -1,6 +1,8 @@
 __version__ = "1.2.5"
 
 from .atom_vectors import AtomVectors
+from .elemnet_like_classifier_network import ElemNetLikeClassifier
+from .elemnet_like_network import ElemNetLike
 from .elemnet_network import ElemNet
 from .elemnet_network_classfn import ElemNetClassifier
 from .elpasolite_network import ElpasoliteNet
