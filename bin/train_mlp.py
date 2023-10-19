@@ -17,7 +17,7 @@ from tensorflow.keras.callbacks import (
     ModelCheckpoint,
 )
 
-from skipatom import ElemNet, ElpasoliteNet
+from skipatom import ElemNetLike, ElemNetLikeClassifier, ElpasoliteNet
 
 try:
     import cPickle as pickle
@@ -45,7 +45,7 @@ def load_all_data(filename, gzipped=True):
     o = gzip.open if gzipped else open
     with o(filename, "rb") as f:
         _, data = pickle.load(f)
-        dataset = np.array(data)
+        dataset = np.array(data, dtype=object)
         return dataset[:, 0].tolist(), dataset[:, 1].tolist()
 
 
@@ -61,6 +61,13 @@ if __name__ == "__main__":
         required=True,
         choices=ARCHITECTURES,
         help="type of architecture to use",
+    )
+    parser.add_argument(
+        "--classification",
+        required=False,
+        action="store_true",
+        default=False,
+        help="whether to use classification instead of regression",
     )
     parser.add_argument(
         "--results",
@@ -141,14 +148,18 @@ if __name__ == "__main__":
 
     architecture = None
     if args.architecture == ELEMNET_ARCH:
-        architecture = ElemNet
+        if args.classification:
+            architecture = ElemNetLikeClassifier
+        else:
+            architecture = ElemNetLike
     elif args.architecture == ELPASOLITE_ARCH:
         architecture = ElpasoliteNet
     else:
         raise Exception("unsupported architecture: %s" % args.architecture)
 
-    experiment = "experiment_%s" % int(time())
-    model_dir = os.path.join(args.models, experiment)
+    name = args.dataset.split(".pkl")[0].split("/")[3]
+    experiment = f"experiment_{name}_{int(time())}"
+    model_dir = os.path.join(args.models, name, experiment)
     if os.path.exists(model_dir):
         # delete the model dir, if it exists
         shutil.rmtree(model_dir)
@@ -195,8 +206,8 @@ if __name__ == "__main__":
         model_checkpoint = ModelCheckpoint(
             filepath=os.path.join(model_dir, f"best_model_repeat_{repeat}_fold_{fold}"),
             save_best_only=True,
-            monitor="val_mae",
-            mode="min",
+            monitor="val_auc" if args.classification else "val_mae",
+            mode="max" if args.classification else "min",
             verbose=1,
         )
 
