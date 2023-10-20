@@ -157,7 +157,7 @@ if __name__ == "__main__":
     else:
         raise Exception("unsupported architecture: %s" % args.architecture)
 
-    name = args.dataset.split(".pkl")[0].split("/")[3]
+    name = args.dataset.split(".pkl")[0].split("/")[-1]
     experiment = f"experiment_{name}_{int(time())}"
     model_dir = os.path.join(args.models, name, experiment)
     if os.path.exists(model_dir):
