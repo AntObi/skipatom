@@ -144,3 +144,9 @@ dmypy.json
 /paper/**/*.out
 /paper/**/*.bbl
 /paper/**/*.blg
+
+# SLURM
+pbs_outputs/*
+*.sh
+*.sh.e*
+*.sh.o*
