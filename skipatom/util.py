@@ -44,8 +44,8 @@ def sum_pool(comp: Composition, dictionary: dict, embeddings: list) -> np.ndarra
     """
     vectors = []
     for e in comp.elements:
-        amount = float(comp.to_reduced_dict[e.to_pretty_string()])
-        vectors.append(amount * np.array(embeddings[dictionary[e.to_pretty_string()]]))
+        amount = float(comp.to_reduced_dict[str(e)])
+        vectors.append(amount * np.array(embeddings[dictionary[str(e)]]))
     return np.sum(vectors, axis=0).tolist()
 
 
@@ -68,8 +68,8 @@ def mean_pool(
     vectors = []
     tot_amount = 0
     for e in comp.elements:
-        amount = float(comp.to_reduced_dict[e.to_pretty_string()])
-        vectors.append(amount * np.array(embeddings[dictionary[e.to_pretty_string()]]))
+        amount = float(comp.to_reduced_dict[str(e)])
+        vectors.append(amount * np.array(embeddings[dictionary[str(e)]]))
         tot_amount += amount
     return (np.sum(vectors, axis=0) / tot_amount).tolist()
 
@@ -88,8 +88,8 @@ def max_pool(comp: Composition, dictionary: dict, embeddings: list) -> np.ndarra
     """
     vectors = []
     for e in comp.elements:
-        amount = float(comp.to_reduced_dict[e.to_pretty_string()])
-        vectors.append(amount * np.array(embeddings[dictionary[e.to_pretty_string()]]))
+        amount = float(comp.to_reduced_dict[str(e)])
+        vectors.append(amount * np.array(embeddings[dictionary[str(e)]]))
     return np.max(vectors, axis=0).tolist()
 
 
