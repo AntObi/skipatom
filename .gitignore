@@ -150,3 +150,6 @@ pbs_outputs/*
 *.sh
 *.sh.e*
 *.sh.o*
+
+test/*
+analysis/*
