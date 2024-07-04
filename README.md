@@ -9,38 +9,42 @@ based on the Skip-gram model used widely in Natural Language Processing.
 
 ## Installation
 
-SkipAtom can be installed with:
+SkipSpecies can be installed with:
 ```
-pip install skipatom
+pip install skipspecies
 ```
-However, this will install a minimal implementation that can be used to work with existing SkipAtom embeddings only. To 
-train new embeddings, SkipAtom should be installed with:
+However, this will install a minimal implementation that can be used to work with existing SkipAtom/SkipSpecies embeddings only. To 
+train new embeddings, SkipSpecies should be installed with:
 ```
-pip install skipatom[training]
+pip install skipspecies[training]
 ```
 
-Pre-trained 30- and 200-dimensional SkipAtom vectors for 86 atom types are available in the `data` directory, 
-in the `mp_2020_10_09.dim30.model` and `mp_2020_10_09.dim200.model` files. To use the pre-trained vectors, follow the 
-example in step 4, below.
+Pre-trained 30-,86-,100-, 200-, 300-, and 400-dimensional SkipAtom and SkipSpecies vectors for 86 atom types/336 species types are available in the `data` directory.
 
-To create SkipAtom vectors, follow steps 1 to 3 below. A dataset of inorganic crystal structures is required. A dataset 
-of 126,335 structures obtained from the [Materials Project](https://materialsproject.org/) is available in 
+To use the pre-trained vectors, follow the  example in step 4, below.
+
+To create SkipAtom/SkipSpecies vectors, follow steps 1 to 3 below. A dataset of inorganic crystal structures is required. A dataset 
+of 110,160 oxidation-state decorated structures obtained from the [Materials Project](https://materialsproject.org/) is available in 
 `data/mp_2020_10_09.pkl.gz`.  From this dataset, pairs of co-occurring atoms will be derived, as depicted in the 
 schematic below:
 
 <img src="resources/schematic.png" width="85%"/>
 
-These pairs will be used in the training of the SkipAtom vectors. Pairs that were previously derived from the 
-Materials Project dataset are available in the file `data/mp_2020_10_09.pairs.csv.gz`.
+These pairs will be used in the training of the SkipAtom/SkipSpecies vectors. Pairs that were previously derived from the 
+Materials Project dataset are available in the files:
+* Atoms: `data/skipatom_mp2022/mp_2022_10_28.pairs.csv.gz`
+* Species: `data/skipatom_mp2022/mp_2022_10_28.pairs_oxi.csv.gz`
 
 _(NOTE: For the following steps 1 to 3, the programs `create_cooccurrence_pairs`, `create_skipatom_training_data` and 
-`create_skipatom_embeddings` are installed as console scripts when using `pip install skipatom`, and will be usable if 
-SkipAtom was installed with `pip install skipatom[training]`.)_
+`create_skipatom_embeddings` are installed as console scripts when using `pip install skipspecies`, and will be usable if 
+SkipSpecies was installed with `pip install skipspecies[training]`.)_
+
+The `create_cooccurrence_pairs` script has been modified to be able to handle species. The pairs generated will have oxidations if the structure has been decorated with oxidation states, and will return pairs of elements if the structure has not been decorated with oxidation states.
 
 1. Create the co-occurrence pairs:
 ```
 $ create_cooccurrence_pairs \
---data data/mp_2020_10_09.pkl.gz \
+--data data/mp_2022_10_28.pkl.gz \
 --out data/mp_2020_10_09.pairs.csv.gz \
 --processes 70 --workers 200 -z
 ```
@@ -269,18 +273,19 @@ placed, respectively. The `train_mlp.py` program also accepts arguments for spec
 size, etc.
 
 - - - - - - - - -
-The SkipAtom approach is described in the paper _"Distributed Representations of Atoms and Materials for Machine Learning"_,
-> Antunes, L.M., Grau-Crespo, R. and Butler, K.T., 2022. Distributed representations of atoms and materials for machine learning. npj Computational Materials, 8(1), p.44.
+## References
+The adaptation SkipSpecies is described in the paper _"Ionic species representations for materials informatics"_
+
+>A. Onwuli, K.T. Butler, A. Walsh. Ionic species representations for materials informatics. [in preparation]
+
+
+
+The SkipAtom approach, of which this is an adaptation, is described in the paper _"Distributed Representations of Atoms and Materials for Machine Learning"_,
+
+[Antunes, L.M., Grau-Crespo, R. and Butler, K.T., 2022. "Distributed representations of atoms and materials for machine learning". *npj Computational Materials*, **8(1)**, p.44.](https://www.nature.com/articles/s41524-022-00729-3)
 
 This repository includes data from the [Materials Project](https://materialsproject.org/). 
-> A. Jain*, S.P. Ong*, G. Hautier, W. Chen, W.D. Richards, S. Dacek, S. Cholia, D. Gunter, D. Skinner, G. Ceder, K.A. 
-Persson (*=equal contributions). The Materials Project: A materials genome approach to accelerating materials innovation.
-APL Materials, 2013, 1(1), 011002.
 
-This repository includes data from the [OQMD database](http://oqmd.org/).
->  Saal, J. E., Kirklin, S., Aykol, M., Meredig, B., and Wolverton, C. "Materials Design and Discovery with 
->High-Throughput Density Functional Theory: The Open Quantum Materials Database (OQMD)", JOM 65, 1501-1509 (2013).
-
-This repository includes data from https://doi.org/10.1103/PhysRevLett.117.135502.
-> Faber, F. A., Lindmaa, A., Von Lilienfeld, O. A., & Armiento, R. (2016). Machine Learning Energies of 2 Million 
->Elpasolite (ABC2D6) Crystals. Physical Review Letters, 117(13), 135502.
+[A. Jain*, S.P. Ong*, G. Hautier, W. Chen, W.D. Richards, S. Dacek, S. Cholia, D. Gunter, D. Skinner, G. Ceder, K.A. 
+Persson (*=equal contributions). "The Materials Project: A materials genome approach to accelerating materials innovation".
+*APL Materials*, 2013, **1(1)**, 011002.](https://pubs.aip.org/aip/apm/article/1/1/011002/119685/Commentary-The-Materials-Project-A-materials)
