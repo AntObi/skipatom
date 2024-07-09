@@ -7,8 +7,9 @@ __pycache__/
 *.so
 
 /out/
-/out_final/
 
+*/models/*
+*/datasets/*
 .idea/
 
 # Distribution / packaging
