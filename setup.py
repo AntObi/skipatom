@@ -55,7 +55,7 @@ setup(
         "training": [
             "pymatgen >= 2021.2.8.1",
             "pandas >= 1.1.5",
-            "tensorflow == 2.3.2",
+            "tensorflow == 2.13",
             "tqdm >= 4.61.1",
         ]
     },
