@@ -25,7 +25,7 @@ Data from the parent repository has been removed on this fork, and the data used
 
 SkipSpecies can be installed by cloning this repository with:
 ```bash
-git clone https://github.com/AntObi/skipspecies.git
+git clone https://github.com/WMD-group/skipspecies.git
 cd skipspecies
 pip install .
 ```
