@@ -8,6 +8,15 @@ __pycache__/
 
 /out/
 
+out_final/species_prop/skipatom/induced/datasets/
+out_final/species_prop/skipatom/induced/models/
+out_final/species_prop/skipspecies/induced/datasets/
+out_final/species_prop/skipspecies/induced/models/
+out_final/species_prop/skipspecies/non_induced/datasets/
+out_final/species_prop/skipspecies/non_induced/models/
+
+*/models/*
+*/datasets/*
 .idea/
 
 # Distribution / packaging
@@ -144,3 +153,12 @@ dmypy.json
 /paper/**/*.out
 /paper/**/*.bbl
 /paper/**/*.blg
+
+# SLURM
+pbs_outputs/*
+*.sh
+*.sh.e*
+*.sh.o*
+
+test/*
+analysis/*

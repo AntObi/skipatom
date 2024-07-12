@@ -10,7 +10,7 @@ import warnings
 
 import numpy as np
 
-from skipatom import get_cooccurrence_pairs, get_cooccurrence_pairs_oxi
+from skipatom import get_cooccurrence_pairs
 
 warnings.simplefilter("ignore", category=UserWarning)
 
@@ -43,15 +43,6 @@ def worker(structs, queue, verbose):
                 logging.warning(e)
 
 
-def worker_oxi(structs, queue, verbose):
-    for i in range(len(structs)):
-        try:
-            queue.put(get_cooccurrence_pairs_oxi(structs[i]))
-        except Exception as e:
-            if verbose:
-                logging.warning(e)
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", type=str, help="The path to the dataset pickle file.")
@@ -60,12 +51,6 @@ def main():
         "--out", "-o", type=str, help="The path to the pairs file to be created."
     )
 
-    parser.add_argument(
-        "--oxi",
-        "-x",
-        action="store_true",
-        help="If present, the pairs will be generated with oxidation states.",
-    )
     parser.add_argument(
         "--zip",
         "-z",
@@ -137,16 +122,11 @@ def main():
     )
 
     jobs = []
-    if args.oxi:
-        for i in range(args.workers):
-            chunk = chunks[i]
-            job = pool.apply_async(worker_oxi, (chunk[:, 0], queue, args.verbose))
-            jobs.append(job)
-    else:
-        for i in range(args.workers):
-            chunk = chunks[i]
-            job = pool.apply_async(worker, (chunk[:, 0], queue, args.verbose))
-            jobs.append(job)
+
+    for i in range(args.workers):
+        chunk = chunks[i]
+        job = pool.apply_async(worker, (chunk[:, 0], queue, args.verbose))
+        jobs.append(job)
 
     for job in jobs:
         job.get()

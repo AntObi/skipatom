@@ -1,7 +1,7 @@
 numpy==1.22.4
 tensorflow==2.13.0
-matbench==0.6
+#matbench==0.6
 pymatgen==2023.7.14
 pandas==2.0.3
-scikit-learn==1.0.1
+scikit-learn
 tqdm==4.65.0

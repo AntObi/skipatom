@@ -2,7 +2,7 @@ import re
 from typing import Dict, Tuple
 
 import numpy as np
-from pymatgen.analysis.bond_valence import BVAnalyzer
+import pandas as pd
 from pymatgen.analysis.graphs import StructureGraph
 from pymatgen.analysis.local_env import CrystalNN
 from pymatgen.core import Composition, Structure
@@ -10,7 +10,7 @@ from pymatgen.core import Composition, Structure
 
 def get_cooccurrence_pairs(struct: Structure) -> list:
     """
-    Given a pymatgen Structure, returns a list with the co-occurring atom pairs.
+    Given a pymatgen Structure, returns a list with the co-occurring atom/species pairs.
 
     :param struct: a pymatgen Structure object
 
@@ -19,7 +19,7 @@ def get_cooccurrence_pairs(struct: Structure) -> list:
 
     pairs = []
     struct_graph = StructureGraph.with_local_env_strategy(struct, CrystalNN())
-    labels = {i: spec.name for i, spec in enumerate(struct.species)}
+    labels = {i: str(spec) for i, spec in enumerate(struct.species)}
     G = struct_graph.graph.to_undirected()
     for n in labels:
         target = labels[n]
@@ -28,32 +28,6 @@ def get_cooccurrence_pairs(struct: Structure) -> list:
         for neighbor in neighbors:
             pairs.append((target, neighbor))
     return pairs
-
-
-def get_cooccurrence_pairs_oxi(struct: Structure) -> list:
-    """
-    Given a pymatgen Structure, returns a list with the co-occurring species pairs.
-
-    :param struct: a pymatgen Structure object
-
-    :return: a list of co-occurring species pairs (i.e. a list of 2-tuples)
-    """
-    analyzer = BVAnalyzer()
-    try:
-        struct = analyzer.get_oxi_state_decorated_structure(struct)
-        pairs = []
-        struct_graph = StructureGraph.with_local_env_strategy(struct, CrystalNN())
-        labels = {i: spec.to_pretty_string() for i, spec in enumerate(struct.species)}
-        G = struct_graph.graph.to_undirected()
-        for n in labels:
-            target = labels[n]
-            # TODO what if the atom doesn't have any neighbors?
-            neighbors = [labels[i] for i in G.neighbors(n)]
-            for neighbor in neighbors:
-                pairs.append((target, neighbor))
-        return pairs
-    except Exception:
-        return []
 
 
 def sum_pool(comp: Composition, dictionary: dict, embeddings: list) -> np.ndarray:
@@ -70,13 +44,15 @@ def sum_pool(comp: Composition, dictionary: dict, embeddings: list) -> np.ndarra
     """
     vectors = []
     for e in comp.elements:
-        amount = float(comp.to_reduced_dict[e.name])
-        vectors.append(amount * np.array(embeddings[dictionary[e.name]]))
+        amount = float(comp.to_reduced_dict[str(e)])
+        vectors.append(amount * np.array(embeddings[dictionary[str(e)]]))
     return np.sum(vectors, axis=0).tolist()
 
 
 def mean_pool(
-    comp: Composition, dictionary: dict, embeddings: list, species_mode: bool = False
+    comp: Composition,
+    dictionary: dict,
+    embeddings: list,
 ) -> np.ndarray:
     """
     Returns a mean-pooled distributed representation of the given composition using the given embeddings.
@@ -92,16 +68,9 @@ def mean_pool(
     vectors = []
     tot_amount = 0
     for e in comp.elements:
-        if species_mode:
-            amount = float(comp.to_reduced_dict[e.to_pretty_string()])
-            vectors.append(
-                amount * np.array(embeddings[dictionary[e.to_pretty_string()]])
-            )
-            tot_amount += amount
-        else:
-            amount = float(comp.to_reduced_dict[e.name])
-            vectors.append(amount * np.array(embeddings[dictionary[e.name]]))
-            tot_amount += amount
+        amount = float(comp.to_reduced_dict[str(e)])
+        vectors.append(amount * np.array(embeddings[dictionary[str(e)]]))
+        tot_amount += amount
     return (np.sum(vectors, axis=0) / tot_amount).tolist()
 
 
@@ -119,8 +88,8 @@ def max_pool(comp: Composition, dictionary: dict, embeddings: list) -> np.ndarra
     """
     vectors = []
     for e in comp.elements:
-        amount = float(comp.to_reduced_dict[e.name])
-        vectors.append(amount * np.array(embeddings[dictionary[e.name]]))
+        amount = float(comp.to_reduced_dict[str(e)])
+        vectors.append(amount * np.array(embeddings[dictionary[str(e)]]))
     return np.max(vectors, axis=0).tolist()
 
 
@@ -303,3 +272,33 @@ def parse_species(species: str) -> Tuple[str, int]:
     if ox_state == 0 and "-" in species:
         ox_state = -1
     return ele, ox_state
+
+
+def atom_vectors_from_csv(embedding_csv):
+    """
+    Return a dictionary mapping atoms to their properties, and a numpy array of the atom embeddings.
+
+    :param embedding_csv: path to the csv file containing the atom embeddings
+    :return: a dictionary mapping atoms to their properties, and a numpy array of the atom embeddings
+    """
+    df = pd.read_csv(embedding_csv)
+    elements = list(df["element"])
+    df.drop(["element"], axis=1, inplace=True)
+    embeddings = df.to_numpy()
+    dictionary = {e: i for i, e in enumerate(elements)}
+    return dictionary, embeddings
+
+
+def species_vectors_from_csv(embedding_csv):
+    """
+    Return a dictionary mapping species to their properties, and a numpy array of the species embeddings.
+
+    :param embedding_csv: path to the csv file containing the species embeddings
+    :return: a dictionary mapping species to their properties, and a numpy array of the species embeddings
+    """
+    df = pd.read_csv(embedding_csv)
+    elements = list(df["species"])
+    df.drop(["species"], axis=1, inplace=True)
+    embeddings = df.to_numpy()
+    dictionary = {e: i for i, e in enumerate(elements)}
+    return dictionary, embeddings
