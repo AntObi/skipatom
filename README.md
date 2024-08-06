@@ -137,12 +137,12 @@ Once the dataset file is generated, train and evaluate the ElemNet-like model us
 ```python
 python bin/train_mlp.py \
 --dataset out_final/species_prop/skipspecies/induced/datasets/skipspecies_sum_dim200_MP_band_gap.pkl \
---architecture elemnet \
+--architecture element \
 --results out_final/species_prop/skipspecies/induced/results \
 --models out_final/species_prop/skipspecies/induced/models
 ```
 
-The directories speciefied by the `--results` and `--models` arguments must already exist before `train_mlp.py` is invoked. They will be where the .csv results file and the best models will be placed, respectively. The `train_mlp.py` program also accepts arguments for specifying the number of splits, the batch size, etc.
+The directories specified by the `--results` and `--models` arguments must already exist before `train_mlp.py` is invoked. They will be where the .csv results file and the best models will be placed, respectively. The `train_mlp.py` program also accepts arguments for specifying the number of splits, the batch size, etc.
 
 ### Analysing the results from the paper
 ![validation curve](resources/Validation_losses_12x7_5_publication.svg)
@@ -152,18 +152,16 @@ Jupyter notebooks have been provided in the `notebooks` directory to analyse the
 
 - - - - - - - - -
 ## References
-The adaptation SkipSpecies is described in the paper _"Ionic species representations for materials informatics"_
 
->A. Onwuli, K.T. Butler, A. Walsh. Ionic species representations for materials informatics. [in preparation]
+SkipSpecies is described in:
 
+[A. Onwuli, K. T. Butler, A. Walsh, "Ionic species representations for materials informatics" ChemRxiv (2024)](https://chemrxiv.org/engage/chemrxiv/article-details/66acbd865101a2ffa8eaa181)
 
+The SkipAtom approach, of which this is an adaptation, is described in:
 
-The SkipAtom approach, of which this is an adaptation, is described in the paper _"Distributed Representations of Atoms and Materials for Machine Learning"_,
+[L. M. Antunes, R. Grau-Crespo, K. T. Butler, "Distributed representations of atoms and materials for machine learning" npj Computational Materials 8, 44 (2022)](https://www.nature.com/articles/s41524-022-00729-3)
 
-[Antunes, L.M., Grau-Crespo, R. and Butler, K.T., 2022. "Distributed representations of atoms and materials for machine learning". *npj Computational Materials*, **8(1)**, p.44.](https://www.nature.com/articles/s41524-022-00729-3)
+This repository includes data from the [Materials Project](https://materialsproject.org): 
 
-This repository includes data from the [Materials Project](https://materialsproject.org/). 
-
-[A. Jain*, S.P. Ong*, G. Hautier, W. Chen, W.D. Richards, S. Dacek, S. Cholia, D. Gunter, D. Skinner, G. Ceder, K.A. 
-Persson (*=equal contributions). "The Materials Project: A materials genome approach to accelerating materials innovation".
-*APL Materials*, 2013, **1(1)**, 011002.](https://pubs.aip.org/aip/apm/article/1/1/011002/119685/Commentary-The-Materials-Project-A-materials)
+[A. Jain, S. P. Ong, G. Hautier, W. Chen, W. D. Richards, S. Dacek, S. Cholia, D. Gunter, D. Skinner, G. Ceder, K. A. 
+Persson, "The Materials Project: A materials genome approach to accelerating materials innovation" APL Materials, 1 011002 (2013)](https://pubs.aip.org/aip/apm/article/1/1/011002/119685/Commentary-The-Materials-Project-A-materials)
