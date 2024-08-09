@@ -50,6 +50,9 @@ SkipSpecies was installed with `pip install .[training]`.)_
 
 1. Download the structures from the Materials Project:
 
+
+   ⚠️ The script provided to download the Materials Project data through the oxidation states route of the new API, uses the [`mp-api`](https://pypi.org/project/mp-api/). Due to the different Pymatgen dependencies with using this route, as well as the API undergoing active changes, we recommend that the user makes a separate environment to use this script with the `mp-api`. Once the data is downloaded, the user can switch back to the environment in which they have installed `SkipAtom/SkipSpecies` ⚠️ 
+
 ```bash
 python bin/download_mp_structs.py \
 --apikey APIKEY \
@@ -75,14 +78,14 @@ _(NOTE: The MP Dataset created in step 1 is automatically versioned. The data pa
 ```bash
 create_skipatom_training_data \
 --data data/mp_2022_10_28.pairs_oxi.csv.gz \
---out data/mp_2022_10_28.training_oxi.data
+--out data/mp_2022_10_28.species.training.data
 ```
 
 4. Create the SkipSpecies embeddings:
 
 ```bash
 create_skipatom_embeddings \
---data data/mp_2022_10_28.training_oxi.data \
+--data data/mp_2022_10_28.species.training.data \
 --out data/skipspecies_2022_10_28/mp_2022_10_28.dim200.species.model \
 --dim 200 --step 0.01 --epochs 10 --batch 1024
 ```
@@ -93,13 +96,23 @@ create_skipatom_embeddings \
 from skipatom import SkipSpeciesInducedModel
 
 model = SkipSpeciesInducedModel.load(
-    "data/kipspecies_2022_10_28/mp_2022_10_28.dim200.model", 
-    "data/mp_2022_10_28.training.data", 
+    "data/skipspecies_2022_10_28/mp_2022_10_28.dim200.model", 
+    "data/mp_2022_10_28.species.training.data", 
     min_count=2e7, top_n=5)
 
 # species vector for O2-
 print(model.vectors[model.dictionary["O2-"]])
 ```
+
+⚠️ Due to file size issues, the following files are currently unavailable:
+* `mp_2022_10_28.species.training.data'
+* 'mp_2022_10_28.species.pairs.csv.gz'
+⚠️
+
+  
+The CSV files for the retrained SkipAtom vectors and the SkipSpecies vectors are available in the repository for downstream applications (e.g. training propery prediction models)
+
+
 ### Neural Network Models
 
 The `skipatom` module contains Keras-based implementations of an ElemNet-type neural network (for both 
@@ -134,10 +147,10 @@ For creating a dataset using the SkipAtom vectors, the `--species_vectors` argum
 
 Once the dataset file is generated, train and evaluate the ElemNet-like model using repeated k-fold cross-validation. From the root of this project:
 
-```python
+```bash
 python bin/train_mlp.py \
 --dataset out_final/species_prop/skipspecies/induced/datasets/skipspecies_sum_dim200_MP_band_gap.pkl \
---architecture element \
+--architecture elemnet \
 --results out_final/species_prop/skipspecies/induced/results \
 --models out_final/species_prop/skipspecies/induced/models
 ```
